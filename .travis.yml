@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t sean/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true sean/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t sean/multi-client ./client
+  - docker build -t sean/multi-nginx ./nginx
+  - docker build -t sean/multi-server ./server
+  - docker build -t sean/multi-worker ./worker
+  # log into the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take images and push them to docker hub
+  - docker push sean/multi-client
+  - docker push sean/multi-nginx
+  - docker push sean/multi-server
+  - docker push sean/multi-worker
